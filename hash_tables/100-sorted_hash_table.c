@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include "hash_help.c"
 
 /**
  * shash_table_create - Creates a new sorted hash table of given size
