@@ -22,14 +22,14 @@ shash_table_t *shash_table_create(unsigned long int size)
 	if (!new_t)
 		return (NULL);
 	new_t->size = size;
-	new_t->array = malloc(size * sizeof(shash_node_t *));
+	new_t->shead = NULL;
+	new_t->stail = NULL;
+	new_t->array = calloc(size, sizeof(shash_node_t *));
 	if (new_t->array == NULL)
 	{
 		free(new_t);
 		return (NULL);
 	}
-	for (i = 0; i < size; i++)
-		new_t->array[i] = NULL;
 	return (new_t);
 }
 
@@ -44,40 +44,55 @@ shash_table_t *shash_table_create(unsigned long int size)
 int shash_table_set(shash_table_t *ht, const char *key, const char *value)
 {
 	unsigned long int index;
-	char *tvalue, *tkey;
-	shash_node_t *new_node, *temp;
+	shash_node_t *new_node, *temp, *temp2;
 
-	if ((!key) || (!ht))
+	if ((!key) || (!ht) || *key != '\0')
 		return (0);
-	tkey = strdup(key);
-	tvalue = strdup(value);
-	index = key_index((unsigned const char *)tkey, ht->size);
+	index = key_index((unsigned const char *)key, ht->size);
 	if (!index)
 		index = 0;
 	temp = ht->array[index];
-	while (temp != NULL)
+	for (; temp; temp = temp->next)
 	{
-		if (strncmp(key, temp->key, strlen(key)) == 0)
+		if (!strcmp(temp->key, key))
 		{
 			free(temp->value);
-			free(tkey);
-			temp->value = tvalue;
-			if (temp->value == NULL)
-				return (0);
-			else
-				return (1);
+			temp->value = strdup(value);
+			return (1);
 		}
-		temp = temp->next;
 	}
 	new_node = malloc(sizeof(shash_node_t));
 	if (!new_node)
 	{
 		return (0);
 	}
-	new_node->key = tkey;
-	new_node->value = tvalue;
-	new_node->next = ht->array[index];
-	ht->array[index] = new_node;
+	new_node->key = strdup(key);
+	new_node->value = strdup(value);
+	new_node->next = ht->array[index], ht->array[index] = new_node;
+	if (!ht->shead)
+	{
+		ht->shead = new_node, ht->stail = new_node;
+		new_node->sprev = NULL, new_node->snext = NULL;
+		return (1);
+	}
+	if (strcmp(ht->shead->key, key) > 0)
+	{
+		new_node->snext = ht->shead, new_node->sprev = NULL;
+		ht->shead->sprev = new_node, ht->shead = new_node;
+		return (1);
+	}
+	temp2 = ht->shead;
+	for (; temp2; temp2 = temp2->snext)
+	{
+		if (strcmp(temp2->key, key) > 0)
+		{
+			new_node->sprev = temp2->sprev, new_node->snext = temp2;
+			temp2->sprev->snext = new_node, temp2->sprev = new_node;
+			return (1);
+		}
+	}
+	new_node->sprev = ht->stail, new_node->snext = NULL;
+	ht->stail->snext = new_node, ht->stail = new_node;
 	return (1);
 }
 
@@ -121,49 +136,18 @@ char *shash_table_get(const shash_table_t *ht, const char *key)
  */
 void shash_table_print(const shash_table_t *ht)
 {
-	unsigned long int i, j;
 	shash_node_t *temp;
-	char *tkey, *tvalue;
 
-	j = 0;
-	if (ht != NULL)
-	{
-		putchar('{');
-		for (i = 0; i < ht->size; i++)
-		{
-			if (ht->array[i] != NULL)
-			{
-				temp = ht->array[i];
-				while (temp)
-				{
-					if (j > 0)
-						printf(", ");
-					tkey = temp->key;
-					tvalue = temp->value;
-					printf("'%s': '%s'", tkey, tvalue);
-					temp = temp->next;
-					j = 1;
-				}
-			}
-		}
-		printf("}\n");
-	}
-}
-
-/**
- * shash_node_delete - Deletes the current node of the table
- * @temp: The node to be deleted recursively
- *
- * Return: No return
- */
-void shash_node_delete(shash_node_t *temp)
-{
-	if (temp == NULL)
+	if (!ht)
 		return;
-	shash_node_delete(temp->next);
-	free(temp->key);
-	free(temp->value);
-	free(temp);
+	temp = ht->shead;
+	putchar('{');
+	for (; temp; temp = temp->snext)
+	{
+		printf("'%s': '%s'%s", temp->key, temp->value, temp->snext ? ", " : "");
+	}
+	putchar('}');
+	putchar('\n');
 }
 
 /**
@@ -174,20 +158,39 @@ void shash_node_delete(shash_node_t *temp)
  */
 void shash_table_delete(shash_table_t *ht)
 {
-	unsigned long int i;
-	shash_node_t *temp;
+	shash_node_t *temp, *node;
 
-	if (ht != NULL)
+	if (!ht)
+		return;
+	node = ht->shead;
+	while (node)
 	{
-		for (i = 0; i < ht->size; i++)
-		{
-			if (ht->array[i] != NULL)
-			{
-				temp = ht->array[i];
-				shash_node_delete(temp);
-			}
-		}
+		temp = node->snext;
+		free(node->key);
+		free(node->value);
+		free(node);
+		node = temp;
 	}
 	free(ht->array);
 	free(ht);
+}
+
+/**
+ * shash_table_print_rev - prints the sorted hash table in reverse
+ * @ht: hash table to check
+ */
+void shash_table_print_rev(const shash_table_t *ht)
+{
+	shash_node_t *temp;
+
+	if (!ht)
+		return;
+	temp = ht->stail;
+	putchar('{');
+	for (; temp; temp = temp->sprev)
+	{
+		printf("'%s': '%s'%s", temp->key, temp->value, temp->sprev ? ", " : "");
+	}
+	putchar('}');
+	putchar('\n');
 }

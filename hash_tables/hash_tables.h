@@ -37,21 +37,6 @@ typedef struct shash_table_s
      shash_node_t *shead;
      shash_node_t *stail;
 } shash_table_t;
-/**
- * struct dlistint_s - doubly linked list
- * @n: integer
- * @prev: points to the previous node
- * @next: points to the next node
- *
- * Description: doubly linked list node structure
- *
- */
-typedef struct dlistint_s
-{
-	int n;
-	struct dlistint_s *prev;
-	struct dlistint_s *next;
-} dlistint_t;
 
 shash_table_t *shash_table_create(unsigned long int size);
 unsigned long int hash_djb2(const unsigned char *str);
@@ -60,6 +45,6 @@ int shash_table_set(shash_table_t *ht, const char *key, const char *value);
 char *shash_table_get(const shash_table_t *ht, const char *key);
 void shash_table_print(const shash_table_t *ht);
 void shash_table_delete(shash_table_t *ht);
-void shash_node_delete(shash_node_t *temp);
+void shash_table_print_rev(const shash_table_t *ht);
 
 #endif
