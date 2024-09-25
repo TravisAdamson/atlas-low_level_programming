@@ -47,9 +47,7 @@ int shash_table_set(shash_table_t *ht, const char *key, const char *value)
 
 	if ((!key) || (!ht) || *key != '\0')
 		return (0);
-	index = key_index((unsigned const char *)key, ht->size);
-	if (!index)
-		index = 0;
+	index = hash_djb2((const unsigned char *)key) % ht->size;
 	temp = ht->array[index];
 	for (; temp; temp = temp->next)
 	{
