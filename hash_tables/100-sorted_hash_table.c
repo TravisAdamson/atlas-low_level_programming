@@ -13,7 +13,6 @@
  */
 shash_table_t *shash_table_create(unsigned long int size)
 {
-	unsigned long int i;
 	shash_table_t *new_t;
 
 	if (size <= 0)
