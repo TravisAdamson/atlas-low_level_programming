@@ -45,7 +45,7 @@ int shash_table_set(shash_table_t *ht, const char *key, const char *value)
 	unsigned long int index;
 	shash_node_t *new_node, *temp, *temp2;
 
-	if ((!key) || (!ht) || *key != '\0')
+	if ((!key) || (!ht) || *key == '\0')
 		return (0);
 	index = hash_djb2((const unsigned char *)key) % ht->size;
 	temp = ht->array[index];
