@@ -52,7 +52,7 @@ int shash_table_set(shash_table_t *ht, const char *key, const char *value)
 	for (; temp; temp = temp->next)
 	{
 		if (!strcmp(temp->key, key))
-			return (free(temp->value), temp->value = strdup(value));
+			return (free(temp->value), temp->value = strdup(value), 1);
 	}
 	new_node = malloc(sizeof(shash_node_t));
 	if (!new_node)
