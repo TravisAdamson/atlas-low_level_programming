@@ -63,8 +63,7 @@ int shash_table_set(shash_table_t *ht, const char *key, const char *value)
 	{
 		return (0);
 	}
-	new_node->key = strdup(key);
-	new_node->value = strdup(value);
+	new_node->key = strdup(key), new_node->value = strdup(value);
 	new_node->next = ht->array[index], ht->array[index] = new_node;
 	if (!ht->shead)
 	{
